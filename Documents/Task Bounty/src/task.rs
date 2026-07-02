@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, Env, String, token};
+use soroban_sdk::{panic_with_error, token, Address, Env, String, Vec};
 use crate::types::{Task, TaskStatus, Error};
 use crate::storage;
 use crate::events;
@@ -47,6 +47,8 @@ pub fn create_task(
         poster: poster.clone(),
         title: title.clone(),
         description,
+        category: String::from_str(env, "General"),
+        tags: Vec::new(env),
         token,
         reward,
         deadline,
@@ -104,4 +106,36 @@ pub fn cancel_task(env: &Env, task_id: u64, poster: Address) {
 
     // Emit event
     events::emit_task_cancelled(env, task_id, &poster);
+}
+
+pub fn update_task_category(env: &Env, task_id: u64, poster: Address, category: String) {
+    if !storage::task_exists(env, task_id) {
+        panic_with_error!(env, Error::TaskNotFound);
+    }
+
+    let mut task = storage::get_task(env, task_id);
+
+    if task.poster != poster {
+        panic_with_error!(env, Error::Unauthorized);
+    }
+
+    task.category = category;
+    storage::set_task(env, &task);
+}
+
+pub fn add_task_tag(env: &Env, task_id: u64, poster: Address, tag: String) {
+    if !storage::task_exists(env, task_id) {
+        panic_with_error!(env, Error::TaskNotFound);
+    }
+
+    let mut task = storage::get_task(env, task_id);
+
+    if task.poster != poster {
+        panic_with_error!(env, Error::Unauthorized);
+    }
+
+    if !task.tags.contains(tag.clone()) {
+        task.tags.push_back(tag);
+        storage::set_task(env, &task);
+    }
 }

@@ -11,6 +11,7 @@ Complete API reference for TaskBounty smart contracts.
 - [Errors](#errors)
 - [Data Structures](#data-structures)
 - [Query Helpers](#query-helpers)
+- [Task Metadata and Query Helpers](#task-metadata-and-query-helpers)
 
 ---
 
@@ -941,6 +942,42 @@ The contract exposes read-only helpers for surfacing tasks in a UI:
 - `getTasksByMinReward(minReward)`
 - `getTasksBeforeDeadline(deadline)`
 - `searchTasks(query)`
+## Task Metadata and Query Helpers
+
+### `updateTaskCategory`
+```solidity
+function updateTaskCategory(uint256 taskId, string calldata category) external
+```
+
+Update the category assigned to a task.
+
+### `addTaskTag`
+```solidity
+function addTaskTag(uint256 taskId, string calldata tag) external
+```
+
+Add a custom tag to a task.
+
+### `getAllTasks`
+```solidity
+function getAllTasks() external view returns (Task[] memory tasks)
+```
+
+Return every task in creation order.
+
+### `getTasksByCategory`
+```solidity
+function getTasksByCategory(string calldata category) external view returns (Task[] memory tasks)
+```
+
+Return tasks whose category matches the provided value.
+
+### `getTasksByTag`
+```solidity
+function getTasksByTag(string calldata tag) external view returns (Task[] memory tasks)
+```
+
+Return tasks that contain the provided tag.
 
 ---
 
