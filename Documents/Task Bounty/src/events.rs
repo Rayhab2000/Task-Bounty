@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, Env, String, Symbol, symbol_short};
+use soroban_sdk::{symbol_short, Address, Env, String};
 use crate::types::Task;
 
 /// Emit TaskCreated event

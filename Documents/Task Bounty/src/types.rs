@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, String};
+use soroban_sdk::{contracterror, contracttype, Address, String, Vec};
 
 /// Task status enum
 #[contracttype]
@@ -28,6 +28,8 @@ pub struct Task {
     pub poster: Address,
     pub title: String,
     pub description: String,
+    pub category: String,
+    pub tags: Vec<String>,
     pub token: Address,           // Token address for reward
     pub reward: i128,             // Reward amount
     pub deadline: u64,            // Unix timestamp
@@ -63,8 +65,8 @@ pub struct Dispute {
 }
 
 /// Error codes
-#[contracttype]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
 pub enum Error {
     TaskNotFound = 1,

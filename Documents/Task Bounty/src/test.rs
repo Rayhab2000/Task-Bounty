@@ -2,27 +2,28 @@
 
 use super::*;
 use soroban_sdk::{
-    testutils::{Address as _, Ledger, LedgerInfo},
+    testutils::{Address as _, Ledger},
     token, Address, Env, String,
 };
 use types::{TaskStatus, SubmissionStatus};
 
-fn create_token_contract<'a>(env: &Env, admin: &Address) -> token::Client<'a> {
-    let token_address = env.register_stellar_asset_contract(admin.clone());
-    token::Client::new(env, &token_address)
+fn create_token_contract<'a>(env: &Env, admin: &Address) -> token::StellarAssetClient<'a> {
+    let token_contract = env.register_stellar_asset_contract_v2(admin.clone());
+    token::StellarAssetClient::new(env, &token_contract.address())
 }
 
-fn setup_test() -> (Env, Address, Address, Address, token::Client<'static>, Address) {
+fn setup_test() -> (Env, Address, Address, Address, token::TokenClient<'static>, Address) {
     let env = Env::default();
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
     let poster = Address::generate(&env);
     let contributor = Address::generate(&env);
-    let token_client = create_token_contract(&env, &admin);
+    let token_admin_client = create_token_contract(&env, &admin);
+    let token_client = token::TokenClient::new(&env, &token_admin_client.address);
 
     // Mint tokens to poster
-    token_client.mint(&poster, &10_000_000_000); // 1000 XLM
+    token_admin_client.mint(&poster, &10_000_000_000); // 1000 XLM
 
     // Deploy contract
     let contract_id = env.register_contract(None, TaskBountyContract);
@@ -67,7 +68,7 @@ fn test_create_task() {
 }
 
 #[test]
-#[should_panic(expected = "InsufficientReward")]
+#[should_panic(expected = "Error(Contract, #7)")]
 fn test_create_task_insufficient_reward() {
     let (env, poster, _, _, token_client, contract_id) = setup_test();
     let client = TaskBountyContractClient::new(&env, &contract_id);
@@ -89,10 +90,14 @@ fn test_create_task_insufficient_reward() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidDeadline")]
+#[should_panic(expected = "Error(Contract, #8)")]
 fn test_create_task_past_deadline() {
     let (env, poster, _, _, token_client, contract_id) = setup_test();
     let client = TaskBountyContractClient::new(&env, &contract_id);
+
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1_000;
+    });
 
     let title = String::from_str(&env, "Task");
     let description = String::from_str(&env, "Description");
@@ -147,7 +152,7 @@ fn test_submit_work() {
 }
 
 #[test]
-#[should_panic(expected = "AlreadySubmitted")]
+#[should_panic(expected = "Error(Contract, #10)")]
 fn test_submit_work_twice() {
     let (env, poster, contributor, _, token_client, contract_id) = setup_test();
     let client = TaskBountyContractClient::new(&env, &contract_id);
@@ -170,7 +175,7 @@ fn test_submit_work_twice() {
 }
 
 #[test]
-#[should_panic(expected = "TaskExpired")]
+#[should_panic(expected = "Error(Contract, #4)")]
 fn test_submit_work_expired() {
     let (env, poster, contributor, _, token_client, contract_id) = setup_test();
     let client = TaskBountyContractClient::new(&env, &contract_id);
@@ -420,3 +425,74 @@ fn test_get_total_tasks() {
 
     assert_eq!(client.get_total_tasks(), 2);
 }
+
+#[test]
+fn test_task_categories_and_tags() {
+    let (env, poster, _, _, token_client, contract_id) = setup_test();
+    let client = TaskBountyContractClient::new(&env, &contract_id);
+
+    let task1 = client.create_task(
+        &poster,
+        &String::from_str(&env, "Build landing page"),
+        &String::from_str(&env, "Create a polished marketing site"),
+        &token_client.address,
+        &10_000_000,
+        &(env.ledger().timestamp() + 86_400),
+        &1,
+    );
+
+    let task2 = client.create_task(
+        &poster,
+        &String::from_str(&env, "Write docs"),
+        &String::from_str(&env, "Document the API and workflow"),
+        &token_client.address,
+        &10_000_000,
+        &(env.ledger().timestamp() + 86_400),
+        &1,
+    );
+
+    let task3 = client.create_task(
+        &poster,
+        &String::from_str(&env, "Fix UI spacing"),
+        &String::from_str(&env, "Adjust layout and typography"),
+        &token_client.address,
+        &10_000_000,
+        &(env.ledger().timestamp() + 86_400),
+        &1,
+    );
+
+    client.update_task_category(&task1, &poster, &String::from_str(&env, "Design"));
+    client.update_task_category(&task2, &poster, &String::from_str(&env, "Writing"));
+    client.update_task_category(&task3, &poster, &String::from_str(&env, "Design"));
+
+    client.add_task_tag(&task1, &poster, &String::from_str(&env, "frontend"));
+    client.add_task_tag(&task1, &poster, &String::from_str(&env, "ui"));
+    client.add_task_tag(&task2, &poster, &String::from_str(&env, "docs"));
+    client.add_task_tag(&task3, &poster, &String::from_str(&env, "frontend"));
+    client.add_task_tag(&task3, &poster, &String::from_str(&env, "bugfix"));
+
+    let design_tasks = client.get_tasks_by_category(&String::from_str(&env, "Design"));
+    assert_eq!(design_tasks.len(), 2);
+    assert_eq!(design_tasks.get(0).unwrap().id, task1);
+    assert_eq!(design_tasks.get(1).unwrap().id, task3);
+
+    let writing_tasks = client.get_tasks_by_category(&String::from_str(&env, "Writing"));
+    assert_eq!(writing_tasks.len(), 1);
+    assert_eq!(writing_tasks.get(0).unwrap().id, task2);
+
+    let frontend_tasks = client.get_tasks_by_tag(&String::from_str(&env, "frontend"));
+    assert_eq!(frontend_tasks.len(), 2);
+    assert_eq!(frontend_tasks.get(0).unwrap().id, task1);
+    assert_eq!(frontend_tasks.get(1).unwrap().id, task3);
+
+    let docs_tasks = client.get_tasks_by_tag(&String::from_str(&env, "docs"));
+    assert_eq!(docs_tasks.len(), 1);
+    assert_eq!(docs_tasks.get(0).unwrap().id, task2);
+
+    let task = client.get_task(&task1);
+    assert_eq!(task.category, String::from_str(&env, "Design"));
+    assert!(task.tags.contains(String::from_str(&env, "frontend")));
+    assert!(task.tags.contains(String::from_str(&env, "ui")));
+}
+
+
