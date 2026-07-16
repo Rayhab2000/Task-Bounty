@@ -24,6 +24,16 @@ pub fn task_exists(env: &Env, task_id: u64) -> bool {
     env.storage().persistent().has(&key)
 }
 
+pub fn has_duplicate_task(env: &Env, poster: &Address, title: &String, description: &String) -> bool {
+    let key = ("TASK_DUP", poster, title, description);
+    env.storage().persistent().has(&key)
+}
+
+pub fn set_duplicate_task(env: &Env, poster: &Address, title: &String, description: &String) {
+    let key = ("TASK_DUP", poster, title, description);
+    env.storage().persistent().set(&key, &true);
+}
+
 // Submission storage
 pub fn get_submission(env: &Env, submission_id: u64) -> Submission {
     let key = ("SUB", submission_id);

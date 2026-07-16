@@ -35,6 +35,10 @@ pub fn create_task(
         panic_with_error!(env, Error::InvalidMaxSubmissions);
     }
 
+    if storage::has_duplicate_task(env, &poster, &title, &description) {
+        panic_with_error!(env, Error::DuplicateTask);
+    }
+
     // Transfer reward to contract (escrow)
     let contract_address = env.current_contract_address();
     let token_client = token::Client::new(env, &token);
@@ -59,6 +63,7 @@ pub fn create_task(
     };
 
     storage::set_task(env, &task);
+    storage::set_duplicate_task(env, &poster, &title, &description);
 
     // Emit event
     events::emit_task_created(env, &task);

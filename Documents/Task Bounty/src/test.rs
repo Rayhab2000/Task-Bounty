@@ -12,7 +12,6 @@ fn create_token_contract<'a>(env: &Env, admin: &Address) -> token::StellarAssetC
     token::StellarAssetClient::new(env, &token_contract.address())
 }
 
-fn setup_test() -> (Env, Address, Address, Address, token::StellarAssetClient<'static>, Address) {
 fn setup_test() -> (Env, Address, Address, Address, token::TokenClient<'static>, Address) {
     let env = Env::default();
     env.mock_all_auths();
@@ -114,6 +113,117 @@ fn test_create_task_past_deadline() {
         &deadline,
         &1,
     );
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #9)")]
+fn test_create_task_invalid_max_submissions() {
+    let (env, poster, _, _, token_client, contract_id) = setup_test();
+    let client = TaskBountyContractClient::new(&env, &contract_id);
+
+    let title = String::from_str(&env, "Task");
+    let description = String::from_str(&env, "Description");
+    let reward = 10_000_000;
+    let deadline = env.ledger().timestamp() + 86400;
+
+    client.create_task(
+        &poster,
+        &title,
+        &description,
+        &token_client.address,
+        &reward,
+        &deadline,
+        &0,
+    );
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #8)")]
+fn test_create_task_deadline_too_far() {
+    let (env, poster, _, _, token_client, contract_id) = setup_test();
+    let client = TaskBountyContractClient::new(&env, &contract_id);
+
+    let title = String::from_str(&env, "Task");
+    let description = String::from_str(&env, "Description");
+    let reward = 10_000_000;
+    let deadline = env.ledger().timestamp() + 31_536_001; // > 365 days
+
+    client.create_task(
+        &poster,
+        &title,
+        &description,
+        &token_client.address,
+        &reward,
+        &deadline,
+        &1,
+    );
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_create_duplicate_task() {
+    let (env, poster, _, _, token_client, contract_id) = setup_test();
+    let client = TaskBountyContractClient::new(&env, &contract_id);
+
+    let title = String::from_str(&env, "Duplicate Task");
+    let description = String::from_str(&env, "Duplicate description");
+    let reward = 10_000_000;
+    let deadline = env.ledger().timestamp() + 86400;
+
+    client.create_task(
+        &poster,
+        &title,
+        &description,
+        &token_client.address,
+        &reward,
+        &deadline,
+        &1,
+    );
+
+    client.create_task(
+        &poster,
+        &title,
+        &description,
+        &token_client.address,
+        &reward,
+        &deadline,
+        &1,
+    );
+}
+
+#[test]
+fn test_same_task_allowed_for_different_poster() {
+    let (env, poster, _, _, token_client, contract_id) = setup_test();
+    let client = TaskBountyContractClient::new(&env, &contract_id);
+    let other_poster = Address::generate(&env);
+
+    let title = String::from_str(&env, "Shared Task");
+    let description = String::from_str(&env, "Same details, different poster");
+    let reward = 10_000_000;
+    let deadline = env.ledger().timestamp() + 86400;
+
+    let first_task_id = client.create_task(
+        &poster,
+        &title,
+        &description,
+        &token_client.address,
+        &reward,
+        &deadline,
+        &1,
+    );
+
+    let second_task_id = client.create_task(
+        &other_poster,
+        &title,
+        &description,
+        &token_client.address,
+        &reward,
+        &deadline,
+        &1,
+    );
+
+    assert_eq!(first_task_id, 1);
+    assert_eq!(second_task_id, 2);
 }
 
 #[test]

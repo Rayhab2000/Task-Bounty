@@ -82,4 +82,5 @@ pub enum Error {
     MaxSubmissionsReached = 11,
     PaymentFailed = 12,
     DisputeAlreadyExists = 13,
+    DuplicateTask = 14,
 }
