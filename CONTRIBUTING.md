@@ -50,6 +50,17 @@ Run the dependency scanners locally before opening a PR that changes lockfiles:
 ./scripts/run-dependency-scan.sh
 ```
 
+
+Frontend HTTP security headers are configured in Next.js and documented in [`SECURITY_HEADERS.md`](./SECURITY_HEADERS.md). Verify locally before changing header policy:
+
+```bash
+cd frontend && pnpm test:security-headers
+# or full build + live header check:
+./scripts/test-security-headers.sh
+```
+
+---
+
 ## Development Setup
 
 See [SETUP.md](./SETUP.md) for full instructions. Quick summary:
@@ -227,6 +238,7 @@ List any breaking changes (or "None").
 - [ ] No compiler warnings (`cargo clippy`)
 - [ ] Documentation updated if public API changed
 - [ ] Dependency changes reviewed against CI scan reports / Dependabot (see [DEPENDENCY_SCANNING.md](./DEPENDENCY_SCANNING.md))
+- [ ] Frontend security header changes verified (`pnpm test:security-headers` / see [SECURITY_HEADERS.md](./SECURITY_HEADERS.md))
 - [ ] PR description complete with issue reference
 - [ ] Branch is up to date with `main`
 - [ ] Screenshots/recordings included for UI changes
