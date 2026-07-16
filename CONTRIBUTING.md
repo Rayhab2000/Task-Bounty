@@ -6,6 +6,7 @@ Thank you for your interest in contributing to TaskBounty — a decentralized ta
 
 - [Code of Conduct](#code-of-conduct)
 - [Before You Start](#before-you-start)
+- [CI checks](#ci-checks)
 - [Development Setup](#development-setup)
 - [Branch Naming Conventions](#branch-naming-conventions)
 - [Commit Message Standards](#commit-message-standards)
@@ -32,6 +33,23 @@ Thank you for your interest in contributing to TaskBounty — a decentralized ta
 2. Comment on the issue you want to work on and wait for assignment
 3. Read [SETUP.md](./SETUP.md) to get your environment ready
 4. Read [CONTRACT_API.md](./CONTRACT_API.md) to understand the contract interface
+
+---
+
+## CI checks
+
+Pull requests to `main` run:
+
+- **Frontend CI** — lint + build ([`FRONTEND_CI_GUIDE.md`](./FRONTEND_CI_GUIDE.md))
+- **Contract CI** — `cargo fmt`, build, test, clippy
+
+Frontend HTTP security headers are configured in Next.js and documented in [`SECURITY_HEADERS.md`](./SECURITY_HEADERS.md). Verify locally before changing header policy:
+
+```bash
+cd frontend && pnpm test:security-headers
+# or full build + live header check:
+./scripts/test-security-headers.sh
+```
 
 ---
 
@@ -211,6 +229,7 @@ List any breaking changes (or "None").
 - [ ] Tests added/updated and passing (`cargo test`)
 - [ ] No compiler warnings (`cargo clippy`)
 - [ ] Documentation updated if public API changed
+- [ ] Frontend security header changes verified (`pnpm test:security-headers` / see [SECURITY_HEADERS.md](./SECURITY_HEADERS.md))
 - [ ] PR description complete with issue reference
 - [ ] Branch is up to date with `main`
 - [ ] Screenshots/recordings included for UI changes
