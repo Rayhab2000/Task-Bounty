@@ -29,6 +29,10 @@ The Frontend CI pipeline has been successfully implemented using GitHub Actions.
 - **Configuration**: Uses existing ESLint config in `frontend/eslint.config.mjs`
 - **Note**: Currently set to `continue-on-error: true` (non-blocking) for warnings
 
+### 3. Dependency Vulnerability Scan (separate workflow)
+
+Frontend package advisories are scanned by [`.github/workflows/dependency-scan.yml`](.github/workflows/dependency-scan.yml) using `pnpm audit`. Reports are uploaded as CI artifacts and summarized on the Actions run page. See [`DEPENDENCY_SCANNING.md`](./DEPENDENCY_SCANNING.md) for full details, local commands, and Dependabot configuration.
+
 ## Key Features
 
 ✅ **Package Manager Detection**
@@ -180,6 +184,8 @@ If dependencies aren't installing correctly:
 ## Related Files
 
 - Workflow: [.github/workflows/frontend-ci.yml](.github/workflows/frontend-ci.yml)
+- Dependency scanning: [.github/workflows/dependency-scan.yml](.github/workflows/dependency-scan.yml)
+- Dependency scanning guide: [DEPENDENCY_SCANNING.md](./DEPENDENCY_SCANNING.md)
 - ESLint Config: [frontend/eslint.config.mjs](frontend/eslint.config.mjs)
 - Package Manager: [frontend/pnpm-lock.yaml](frontend/pnpm-lock.yaml)
 - Contributing Guide: [contributor.md](contributor.md)

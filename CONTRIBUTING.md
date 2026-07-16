@@ -6,6 +6,7 @@ Thank you for your interest in contributing to TaskBounty — a decentralized ta
 
 - [Code of Conduct](#code-of-conduct)
 - [Before You Start](#before-you-start)
+- [CI checks](#ci-checks)
 - [Development Setup](#development-setup)
 - [Branch Naming Conventions](#branch-naming-conventions)
 - [Commit Message Standards](#commit-message-standards)
@@ -34,6 +35,20 @@ Thank you for your interest in contributing to TaskBounty — a decentralized ta
 4. Read [CONTRACT_API.md](./CONTRACT_API.md) to understand the contract interface
 
 ---
+
+## CI checks
+
+Pull requests to `main` run:
+
+- **Frontend CI** — lint + build ([`FRONTEND_CI_GUIDE.md`](./FRONTEND_CI_GUIDE.md))
+- **Contract CI** — `cargo fmt`, build, test, clippy
+- **Dependency vulnerability scan** — `pnpm audit` + `cargo audit` with downloadable reports ([`DEPENDENCY_SCANNING.md`](./DEPENDENCY_SCANNING.md))
+
+Run the dependency scanners locally before opening a PR that changes lockfiles:
+
+```bash
+./scripts/run-dependency-scan.sh
+```
 
 ## Development Setup
 
@@ -211,6 +226,7 @@ List any breaking changes (or "None").
 - [ ] Tests added/updated and passing (`cargo test`)
 - [ ] No compiler warnings (`cargo clippy`)
 - [ ] Documentation updated if public API changed
+- [ ] Dependency changes reviewed against CI scan reports / Dependabot (see [DEPENDENCY_SCANNING.md](./DEPENDENCY_SCANNING.md))
 - [ ] PR description complete with issue reference
 - [ ] Branch is up to date with `main`
 - [ ] Screenshots/recordings included for UI changes
