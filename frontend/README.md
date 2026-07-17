@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## HTTP security headers
+
+Production responses include recommended security headers (CSP, HSTS, `X-Frame-Options`, and others). Configuration lives in [`security-headers.mjs`](./security-headers.mjs) and is wired through [`next.config.ts`](./next.config.ts).
+
+```bash
+pnpm test:security-headers
+# full build + live curl check from repo root:
+../scripts/test-security-headers.sh
+```
+
+See [`../SECURITY_HEADERS.md`](../SECURITY_HEADERS.md) for the full list and CSP compatibility notes.
+
 ## Getting Started
 
 First, run the development server:

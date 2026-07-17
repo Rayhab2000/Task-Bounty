@@ -29,6 +29,13 @@ The Frontend CI pipeline has been successfully implemented using GitHub Actions.
 - **Configuration**: Uses existing ESLint config in `frontend/eslint.config.mjs`
 - **Note**: Currently set to `continue-on-error: true` (non-blocking) for warnings
 
+### 3. HTTP security headers (config loaded at build)
+
+- **Config**: [`frontend/security-headers.mjs`](./frontend/security-headers.mjs) via [`frontend/next.config.ts`](./frontend/next.config.ts)
+- **Purpose**: Apply OWASP-recommended response headers on all routes
+- **Local verification**: `pnpm test:security-headers` or [`scripts/test-security-headers.sh`](./scripts/test-security-headers.sh)
+- **Docs**: [`SECURITY_HEADERS.md`](./SECURITY_HEADERS.md)
+
 ## Key Features
 
 ✅ **Package Manager Detection**
@@ -180,6 +187,8 @@ If dependencies aren't installing correctly:
 ## Related Files
 
 - Workflow: [.github/workflows/frontend-ci.yml](.github/workflows/frontend-ci.yml)
+- Security headers: [SECURITY_HEADERS.md](./SECURITY_HEADERS.md)
+- Security headers config: [frontend/security-headers.mjs](frontend/security-headers.mjs)
 - ESLint Config: [frontend/eslint.config.mjs](frontend/eslint.config.mjs)
 - Package Manager: [frontend/pnpm-lock.yaml](frontend/pnpm-lock.yaml)
 - Contributing Guide: [contributor.md](contributor.md)
