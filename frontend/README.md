@@ -32,6 +32,44 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Health Check
+
+The app exposes a health check endpoint for monitoring application status and service availability:
+
+```
+GET /api/health
+```
+
+Example response (`200 OK`, `Cache-Control: no-store`):
+
+```json
+{
+  "status": "ok",
+  "service": "taskbounty-frontend",
+  "timestamp": "2026-07-16T21:00:00.000Z",
+  "uptime": 42,
+  "environment": "production"
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `status` | `"ok"` when the app is able to serve requests |
+| `service` | Service identifier (`taskbounty-frontend`) |
+| `timestamp` | ISO-8601 time the report was generated |
+| `uptime` | Seconds the Node.js process has been running |
+| `environment` | Runtime environment (`development`, `production`, `test`) |
+
+The endpoint is always server-rendered (never cached), so it reflects the live process. It can be wired into load balancers, uptime monitors, or container orchestration probes.
+
+## Running Tests
+
+Unit tests are written with [Vitest](https://vitest.dev):
+
+```bash
+pnpm test
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
