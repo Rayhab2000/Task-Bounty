@@ -1,4 +1,3 @@
-import { logger } from "@/lib/logger";
 import {
   allowAllModules,
   FREIGHTER_ID,
@@ -81,7 +80,7 @@ export async function connect(callback?: () => Promise<void>) {
         await setWallet(option.id);
         if (callback) await callback();
       } catch (e) {
-        logger.error("Error setting wallet", { error: e instanceof Error ? e.message : String(e) });
+        console.error(e);
       }
       return option.id;
     },

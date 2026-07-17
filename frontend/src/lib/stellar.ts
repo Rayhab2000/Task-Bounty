@@ -1,5 +1,3 @@
-import { logger } from "./logger";
-
 /**
  * Stellar utility functions for interacting with the Horizon API
  */
@@ -31,7 +29,7 @@ export async function getAccountDetails(
     }
     return response.json();
   } catch (error) {
-    logger.error("Error fetching account details", { error: error instanceof Error ? error.message : String(error) });
+    console.error("Error fetching account details:", error);
     return null;
   }
 }

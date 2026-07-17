@@ -1,9 +1,8 @@
+use crate::base::events::{AutoshareCreated, AutoshareUpdated, GroupActivated, GroupDeactivated, AdminTransferred, Withdrawal};
 use crate::base::types::GroupMember;
 use crate::mock_token::{MockToken, MockTokenClient};
 use crate::test_utils::{create_test_group, setup_test_env};
 use crate::{AutoShareContract, AutoShareContractClient};
-
-/*use soroban_sdk::testutils::Events;*/
 use soroban_sdk::{testutils::Address as _, Address, BytesN, Env, String, Vec};
 fn create_helper(
     client: &AutoShareContractClient,
@@ -62,6 +61,12 @@ fn test_create_and_get_success() {
     let m2 = result.members.get(1).unwrap();
     assert_eq!(m2.address, member2);
     assert_eq!(m2.percentage, 40);
+    
+    // Check events (AutoshareCreated and AutoshareUpdated since create_test_group calls update_members)
+    let events = test_env.env.events().all();
+    assert_eq!(events.len(), 2);
+    assert_eq!(events.get(0).unwrap().name, "AutoshareCreated");
+    assert_eq!(events.get(1).unwrap().name, "AutoshareUpdated");
 }
 
 #[test]
@@ -1209,6 +1214,87 @@ fn test_is_group_member_works_on_inactive_group() {
 
     // Should still be able to check membership
     assert!(client.is_group_member(&id, &member1));
+}
+
+#[test]
+fn test_group_deactivate_activate_events() {
+    let test_env = setup_test_env();
+    let client = AutoShareContractClient::new(&test_env.env, &test_env.autoshare_contract);
+
+    let creator = test_env.users.get(0).unwrap().clone();
+    let id = BytesN::from_array(&test_env.env, &[1u8; 32]);
+    let name = String::from_str(&test_env.env, "Test Group");
+    let mut members = Vec::new(&test_env.env);
+    members.push_back(GroupMember {
+        address: Address::generate(&test_env.env),
+        percentage: 100,
+    });
+
+    create_helper(&client, &id, &name, &creator, &members, &test_env);
+
+    // Check initial events (AutoshareCreated, AutoshareUpdated)
+    let initial_events = test_env.env.events().all();
+    assert_eq!(initial_events.len(), 2);
+
+    // Deactivate group
+    client.deactivate_group(&id, &creator);
+    let events_after_deactivate = test_env.env.events().all();
+    assert_eq!(events_after_deactivate.len(), 3);
+    assert_eq!(events_after_deactivate.get(2).unwrap().name, "GroupDeactivated");
+
+    // Activate group
+    client.activate_group(&id, &creator);
+    let events_after_activate = test_env.env.events().all();
+    assert_eq!(events_after_activate.len(), 4);
+    assert_eq!(events_after_activate.get(3).unwrap().name, "GroupActivated");
+}
+
+#[test]
+fn test_admin_transfer_event() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(AutoShareContract, ());
+    let client = AutoShareContractClient::new(&env, &contract_id);
+
+    let old_admin = Address::generate(&env);
+    let new_admin = Address::generate(&env);
+
+    client.initialize_admin(&old_admin);
+    client.transfer_admin(&old_admin, &new_admin);
+
+    let events = env.events().all();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events.get(0).unwrap().name, "AdminTransferred");
+}
+
+#[test]
+fn test_withdrawal_event() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(AutoShareContract, ());
+    let client = AutoShareContractClient::new(&env, &contract_id);
+
+    // Initialize admin
+    let admin = Address::generate(&env);
+    client.initialize_admin(&admin);
+
+    // Deploy and mint test token
+    let token_id = env.register(MockToken, ());
+    let token_client = MockTokenClient::new(&env, &token_id);
+    let token_admin = Address::generate(&env);
+    token_client.initialize(&token_admin, &7, &String::from_str(&env, "TEST"), &String::from_str(&env, "TEST"));
+    token_client.mint(&env.current_contract_address(), &1000);
+
+    // Add token as supported
+    client.add_supported_token(&token_id, &admin);
+
+    // Perform withdrawal
+    let recipient = Address::generate(&env);
+    client.withdraw(&admin, &token_id, &1000, &recipient);
+
+    let events = env.events().all();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events.get(0).unwrap().name, "Withdrawal");
 }
 
 // =====================
