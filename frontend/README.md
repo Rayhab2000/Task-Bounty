@@ -12,6 +12,16 @@ pnpm test:security-headers
 
 See [`../SECURITY_HEADERS.md`](../SECURITY_HEADERS.md) for the full list and CSP compatibility notes.
 
+## Task submission file validation
+
+The frontend now exposes a server-side validation endpoint for uploaded task submission files:
+
+```
+POST /api/task-submissions/validate
+```
+
+Accepted uploads are restricted to a small allow-list of safe formats (`.pdf`, `.zip`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.txt`, `.md`, `.json`). Validation checks file count, individual file size, combined payload size, suspicious filenames, declared MIME type, and the file signature/content where possible before accepting the upload.
+
 ## Getting Started
 
 First, run the development server:
