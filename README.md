@@ -309,6 +309,7 @@ Deadline Enforcement: Timestamp-based validations
 Input Validation: Comprehensive checks on all parameters
 Atomic Operations: Stellar's transaction atomicity guarantees
 No Reentrancy: Soroban's execution model prevents reentrancy attacks
+HTTP Security Headers: The Next.js frontend applies CSP, HSTS, and related headers on all responses — see SECURITY_HEADERS.md
 📊 Gas Optimization (Fee Efficiency)
 Stellar advantages:
 

@@ -221,6 +221,9 @@ Then open:
 ```text
 http://localhost:3000
 ```
+Once running, application status can be monitored via the health check endpoint at [http://localhost:3000/api/health](http://localhost:3000/api/health) (see `frontend/README.md` for the response format).
+
+### Environment variables
 
 ### Production build
 
@@ -262,6 +265,18 @@ cargo clippy --all-targets -- -D warnings
 ```
 
 ### Frontend checks
+Tests are in `contract/contracts/hello-world/src/test.rs` and use the Soroban test environment (`soroban_sdk::testutils`).
+
+### Frontend tests
+
+```bash
+cd frontend
+pnpm test    # Run unit tests (Vitest)
+```
+
+Frontend unit tests live next to the code they cover (e.g. `frontend/src/lib/health.test.ts`).
+
+### Frontend linting
 
 ```bash
 cd frontend
