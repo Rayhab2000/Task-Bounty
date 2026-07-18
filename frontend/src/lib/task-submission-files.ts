@@ -5,6 +5,11 @@ export const MAX_TASK_SUBMISSION_FILE_SIZE_BYTES = 10 * MEBIBYTE;
 export const MAX_TASK_SUBMISSION_TOTAL_SIZE_BYTES = 25 * MEBIBYTE;
 export const MAX_TASK_SUBMISSION_FILENAME_LENGTH = 120;
 
+// Helper to format file size in MB
+export function formatFileSize(bytes: number): string {
+  return `${(bytes / MEBIBYTE).toFixed(0)} MB`;
+}
+
 const DANGEROUS_FILE_EXTENSIONS = new Set([
   "apk",
   "app",
@@ -248,37 +253,37 @@ function validateFilename(name: string) {
   const normalized = name.normalize("NFKC").trim();
 
   if (!normalized) {
-    errors.push("File names must not be empty.");
+    errors.push("Please provide a file name.");
     return errors;
   }
 
   if (normalized.length > MAX_TASK_SUBMISSION_FILENAME_LENGTH) {
     errors.push(
-      `File name \"${normalized}\" exceeds ${MAX_TASK_SUBMISSION_FILENAME_LENGTH} characters.`,
+      `File name is too long. Keep it under ${MAX_TASK_SUBMISSION_FILENAME_LENGTH} characters.`,
     );
   }
 
   if (/^[.]/.test(normalized)) {
-    errors.push(`Hidden file \"${normalized}\" is not allowed.`);
+    errors.push("Hidden files are not allowed. Please choose a different file.");
   }
 
   if (/[\\/]/.test(normalized) || normalized.includes("..")) {
-    errors.push(`File name \"${normalized}\" contains an invalid path sequence.`);
+    errors.push("File name contains invalid characters. Please rename your file.");
   }
 
   if (/[\u0000-\u001f\u007f]/.test(normalized)) {
-    errors.push(`File name \"${normalized}\" contains control characters.`);
+    errors.push("File name contains invalid characters. Please rename your file.");
   }
 
   const extension = getFileExtension(normalized);
 
   if (!extension) {
-    errors.push(`File \"${normalized}\" must include an extension.`);
+    errors.push("File must have an extension (e.g., .pdf, .zip). Please rename your file.");
     return errors;
   }
 
   if (!ALLOWED_EXTENSIONS.has(extension)) {
-    errors.push(`File extension .${extension} is not allowed for task submissions.`);
+    errors.push(`File type .${extension} isn't allowed. Use PDF, ZIP, images, or text files.`);
   }
 
   const embeddedDangerousExtension = getEmbeddedExtensions(normalized).find((value) =>
@@ -286,13 +291,11 @@ function validateFilename(name: string) {
   );
 
   if (embeddedDangerousExtension) {
-    errors.push(
-      `File \"${normalized}\" contains the blocked embedded extension .${embeddedDangerousExtension}.`,
-    );
+    errors.push("File contains blocked extensions. Please choose a different file.");
   }
 
   if (DANGEROUS_FILE_EXTENSIONS.has(extension)) {
-    errors.push(`File extension .${extension} is blocked for security reasons.`);
+    errors.push("This file type is blocked for security reasons. Please choose a different file.");
   }
 
   return errors;
@@ -309,7 +312,7 @@ async function validateFile(file: File): Promise<TaskSubmissionValidationResult>
     return {
       ok: false,
       status: 400,
-      errors: [`File \"${file.name}\" is empty.`],
+      errors: ["This file is empty. Please upload a valid file."],
     };
   }
 
@@ -318,7 +321,7 @@ async function validateFile(file: File): Promise<TaskSubmissionValidationResult>
       ok: false,
       status: 413,
       errors: [
-        `File \"${file.name}\" exceeds the ${MAX_TASK_SUBMISSION_FILE_SIZE_BYTES / MEBIBYTE} MB limit.`,
+        `File is too large. Max size: ${formatFileSize(MAX_TASK_SUBMISSION_FILE_SIZE_BYTES)}.`,
       ],
     };
   }
@@ -330,7 +333,7 @@ async function validateFile(file: File): Promise<TaskSubmissionValidationResult>
     return {
       ok: false,
       status: 400,
-      errors: [`File \"${file.name}\" uses an unsupported extension.`],
+      errors: ["File type isn't supported. Please use PDF, ZIP, images, or text files."],
     };
   }
 
@@ -343,9 +346,7 @@ async function validateFile(file: File): Promise<TaskSubmissionValidationResult>
       return {
         ok: false,
         status: 400,
-        errors: [
-          `File \"${file.name}\" declares MIME type \"${providedMimeType}\", which does not match .${extension}.`,
-        ],
+        errors: ["File type doesn't match its content. Please check your file."],
       };
     }
   }
@@ -358,7 +359,7 @@ async function validateFile(file: File): Promise<TaskSubmissionValidationResult>
     return {
       ok: false,
       status: 400,
-      errors: [`File \"${file.name}\" content is not a supported task submission format.`],
+      errors: ["File content isn't a supported format. Please check your file."],
     };
   }
 
@@ -366,9 +367,7 @@ async function validateFile(file: File): Promise<TaskSubmissionValidationResult>
     return {
       ok: false,
       status: 400,
-      errors: [
-        `File \"${file.name}\" content does not match its .${extension} extension.`,
-      ],
+      errors: ["File content doesn't match its extension. Please check your file."],
     };
   }
 
@@ -407,7 +406,7 @@ export async function validateTaskSubmissionFiles(
     return {
       ok: false,
       status: 400,
-      errors: ["At least one task submission file is required."],
+      errors: ["Please select at least one file to upload."],
     };
   }
 
@@ -416,7 +415,7 @@ export async function validateTaskSubmissionFiles(
       ok: false,
       status: 413,
       errors: [
-        `A maximum of ${MAX_TASK_SUBMISSION_FILES} task submission files can be uploaded at once.`,
+        `Too many files. Max: ${MAX_TASK_SUBMISSION_FILES} files per upload.`,
       ],
     };
   }
@@ -428,7 +427,7 @@ export async function validateTaskSubmissionFiles(
       ok: false,
       status: 413,
       errors: [
-        `Combined task submission uploads exceed the ${MAX_TASK_SUBMISSION_TOTAL_SIZE_BYTES / MEBIBYTE} MB limit.`,
+        `Total file size too large. Max combined size: ${formatFileSize(MAX_TASK_SUBMISSION_TOTAL_SIZE_BYTES)}.`,
       ],
     };
   }

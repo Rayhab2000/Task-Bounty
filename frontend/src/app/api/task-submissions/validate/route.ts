@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     return buildNoStoreJson(
       {
         ok: false,
-        error: "Expected multipart form data containing one or more task submission files.",
+        error: "Please upload files using a valid form.",
       },
       400,
     );
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return buildNoStoreJson(
       {
         ok: false,
-        error: "Invalid task submission upload.",
+        error: validation.errors[0] || "Please check your upload and try again.",
         details: validation.errors,
         limits: {
           maxFiles: MAX_TASK_SUBMISSION_FILES,
