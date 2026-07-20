@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CONTRIBUTORS } from "@/constants/mock-tasks";
-import { Search } from "lucide-react";
 
 export interface FilterState {
   category: string;
@@ -24,7 +23,7 @@ interface TaskFilterProps {
 }
 
 export function TaskFilter({ filters, onFilterChange, onReset }: TaskFilterProps) {
-  const handleChange = (key: keyof FilterState, value: any) => {
+  const handleChange = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     onFilterChange({ ...filters, [key]: value });
   };
 

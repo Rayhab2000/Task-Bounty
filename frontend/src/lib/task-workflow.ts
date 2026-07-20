@@ -29,10 +29,6 @@ const contributorSubmissions = new Map<string, Set<string>>();
 let nextTaskId = 1;
 let nextSubmissionId = 1;
 
-function taskKey(taskId: string, contributor: string) {
-  return `${taskId}:${contributor}`;
-}
-
 function validateCreateTaskInput(input: CreateTaskInput, nowSeconds: number): string[] {
   const errors: string[] = [];
 

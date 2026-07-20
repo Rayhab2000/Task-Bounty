@@ -40,7 +40,7 @@ export const signTransaction = async (
   }
   try {
     return await k.signTransaction(...args);
-  } catch (e) {
+  } catch {
     const error = createError(ErrorCodes.WALLET_CONNECTION_FAILED);
     throw new Error(error.message);
   }
