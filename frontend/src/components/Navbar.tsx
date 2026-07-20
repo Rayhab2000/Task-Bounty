@@ -83,10 +83,6 @@ export function Navbar() {
           aria-controls="mobile-navigation-menu"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="inline-flex items-center justify-center p-3 rounded-full text-[#E2E2E2] bg-[#101011] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#92F2FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#070A11]"
-          className="inline-flex items-center justify-center p-3 rounded-full text-[#E2E2E2] bg-[#101011] focus:outline-none focus:ring-2 focus:ring-[#5B63D6] focus:ring-offset-2 focus:ring-offset-[#0D0D10]"
-          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="mobile-menu"
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -94,7 +90,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        id="mobile-menu"
+        id="mobile-navigation-menu"
         className={`absolute top-full left-0 right-0 mt-2 mx-3 p-4 bg-[#0D0D10] border border-[#232542] rounded-2xl shadow-xl z-50 transition-all duration-300 ease-in-out ${
           isMobileMenuOpen
             ? "opacity-100 translate-y-0 pointer-events-auto"

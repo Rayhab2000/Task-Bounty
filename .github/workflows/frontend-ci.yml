@@ -104,6 +104,19 @@ jobs:
         continue-on-error: true
 
       # -----------------------------------
+      # Unit and E2E tests
+      # -----------------------------------
+      - name: Run frontend tests
+        run: |
+          if [ "${{ steps.pm.outputs.manager }}" = "pnpm" ]; then
+            pnpm test
+          elif [ "${{ steps.pm.outputs.manager }}" = "yarn" ]; then
+            yarn test
+          else
+            npm test
+          fi
+
+      # -----------------------------------
       # Build check
       # -----------------------------------
       - name: Build frontend
