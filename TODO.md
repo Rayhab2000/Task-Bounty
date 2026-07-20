@@ -1,19 +1,18 @@
-# Task: Strengthen Client-Side Form Validation
+    # Task: Add Deployment Guide for Soroban Contracts
 
 ## Steps
 
 - [x] Step 1: Explore codebase and understand existing patterns
 - [x] Step 2: Create comprehensive plan with user approval
-- [ ] Step 3: Create `src/lib/form-validation.ts` with validation utilities
-  - [ ] validateRequired() - Reject empty values
-  - [ ] validateMinLength() / validateMaxLength() - Length validation
-  - [ ] validateNumeric() - Numeric validation  
-  - [ ] validateStellarAddress() - Reject invalid wallet addresses
-  - [ ] validateDeadline() - Deadline validation
-  - [ ] validateReward() - Minimum reward validation
-  - [ ] validateEmail() - Email validation (for existing waitlist form)
-  - [ ] createTaskFormValidator() - Full form validator combining all rules
-- [ ] Step 4: Create `src/lib/form-validation.test.ts` with tests
-- [ ] Step 5: Update existing waitlist form to use validation utilities
-- [ ] Step 6: Run tests to verify everything works
+- [x] Step 3: Create `DEPLOYMENT.md` with comprehensive deployment guide
+  - [x] Overview and prerequisites
+  - [x] Local development deployment
+  - [x] Testnet deployment (contract + frontend)
+  - [x] Production/mainnet deployment
+  - [x] Contract initialization steps
+  - [x] Frontend deployment (Vercel/self-hosted)
+  - [x] Post-deployment verification
+  - [x] CI/CD examples
+  - [x] Troubleshooting
 
+                                                                                            
