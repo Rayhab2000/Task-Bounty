@@ -68,7 +68,11 @@ We provide security updates for the following versions:
 - HTTP Security Headers (CSP, HSTS, X-Frame-Options) are enforced on all responses
 - Input validation on all user-facing forms
 - Wallet integration follows Stellar Wallets Kit security best practices
-- Environment variables are never exposed in frontend code
+- Environment variable management:
+  - Secrets must never be committed (see [ENVIRONMENT.md](ENVIRONMENT.md))
+  - Only `NEXT_PUBLIC_*` values may reach the browser — treat them as public
+  - Private keys, mnemonics, and API tokens must stay in gitignored `.env.local` files or a secret manager
+  - Templates live in `.env.example` with empty / placeholder values only
 
 ### Blockchain-Specific Concerns
 

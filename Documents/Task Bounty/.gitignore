@@ -10,8 +10,10 @@ out/
 # Docs
 docs/
 
-# Dotenv file
+# Dotenv files — never commit real secrets
 .env
+.env.*
+!.env.example
 
 # Dependencies
 lib/

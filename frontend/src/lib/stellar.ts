@@ -3,8 +3,7 @@
  */
 
 import { createError, ErrorCodes, StandardError } from "@/lib/errors";
-
-const HORIZON_URL = "https://horizon.stellar.org";
+import { getPublicEnv } from "@/lib/env";
 
 interface AccountDetails {
   id: string;
@@ -16,6 +15,10 @@ interface AccountDetails {
   }>;
 }
 
+function getHorizonUrl() {
+  return getPublicEnv().horizonUrl.replace(/\/$/, "");
+}
+
 /**
  * Fetches the account details for a given Stellar public key
  * @param publicKey - The Stellar public key
@@ -25,7 +28,7 @@ export async function getAccountDetails(
   publicKey: string,
 ): Promise<AccountDetails> {
   try {
-    const response = await fetch(`${HORIZON_URL}/accounts/${publicKey}`);
+    const response = await fetch(`${getHorizonUrl()}/accounts/${publicKey}`);
     if (!response.ok) {
       if (response.status === 404) {
         throw createError(ErrorCodes.STELLAR_ACCOUNT_NOT_FOUND);
