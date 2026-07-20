@@ -1,32 +1,61 @@
-import { NextResponse } from 'next/server';
-import { taskSchema } from '@/lib/taskValidation';
-import { z } from 'zod';
+import { createTask } from "@/lib/task-workflow";
+import { buildNoStoreJson } from "@/lib/api-response";
 
-export async function POST(req: Request) {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  let body: unknown;
+
   try {
-    const body = await req.json();
-    const validatedData = taskSchema.parse(body);
-
-    // Aquí iría la lógica de interacción con el cliente RPC de Stellar/Soroban
-    return NextResponse.json(
-      { message: 'Task created successfully', data: validatedData },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const errors = error.issues.map((e) => ({
-        path: e.path.join('.'),
-        message: e.message,
-      }));
-      return NextResponse.json(
-        { message: 'Validation failed', errors },
-        { status: 400 }
-      );
-    }
-    
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
+    body = await request.json();
+  } catch {
+    return buildNoStoreJson(
+      {
+        ok: false,
+        error: "Request body must be valid JSON.",
+      },
+      400,
     );
   }
+
+  if (!body || typeof body !== "object") {
+    return buildNoStoreJson(
+      {
+        ok: false,
+        error: "Invalid task payload.",
+        details: ["Request body must be a JSON object."],
+      },
+      400,
+    );
+  }
+
+  const payload = body as Record<string, unknown>;
+  const result = createTask({
+    poster: String(payload.poster ?? ""),
+    title: String(payload.title ?? ""),
+    description: String(payload.description ?? ""),
+    reward: Number(payload.reward),
+    deadline: Number(payload.deadline),
+    maxSubmissions: Number(payload.maxSubmissions),
+  });
+
+  if (!result.ok) {
+    return buildNoStoreJson(
+      {
+        ok: false,
+        error: result.error,
+        details: result.details,
+      },
+      result.status,
+    );
+  }
+
+  return buildNoStoreJson(
+    {
+      ok: true,
+      task: result.task,
+    },
+    201,
+  );
 }
