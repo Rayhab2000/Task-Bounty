@@ -5,7 +5,6 @@ import React, { useState, useMemo } from "react";
 import { TaskFilter, type FilterState } from "@/components/TaskFilter";
 import { TaskList } from "@/components/TaskList";
 import { MOCK_COMPLETED_TASKS } from "@/constants/mock-tasks";
-import type { CompletedTask } from "@/types/task";
 
 const INITIAL_FILTERS: FilterState = {
   category: "All",
