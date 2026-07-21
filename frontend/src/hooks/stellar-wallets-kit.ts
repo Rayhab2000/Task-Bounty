@@ -5,12 +5,19 @@ import {
   WalletNetwork,
 } from "@creit.tech/stellar-wallets-kit";
 import { createError, ErrorCodes } from "@/lib/errors";
+import { getPublicEnv } from "@/lib/env";
 
 const SELECTED_WALLET_ID = "selectedWalletId";
 
 function getSelectedWalletId() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(SELECTED_WALLET_ID);
+}
+
+function resolveWalletNetwork() {
+  return getPublicEnv().stellarNetwork === "TESTNET"
+    ? WalletNetwork.TESTNET
+    : WalletNetwork.PUBLIC;
 }
 
 let kit: StellarWalletsKit | null = null;
@@ -21,7 +28,7 @@ function getKit(): StellarWalletsKit | null {
   if (typeof window !== "undefined") {
     kit = new StellarWalletsKit({
       modules: allowAllModules(),
-      network: WalletNetwork.PUBLIC,
+      network: resolveWalletNetwork(),
       selectedWalletId: getSelectedWalletId() ?? FREIGHTER_ID,
     });
     return kit;

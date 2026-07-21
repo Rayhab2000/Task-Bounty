@@ -147,14 +147,29 @@ cd ..
 
 ### Frontend configuration
 
-The current frontend does **not** require a `.env.local` file to boot.
+Copy the example env file if you want local overrides (optional — defaults work out of the box):
 
-At the moment:
+```bash
+cd frontend
+cp .env.example .env.local
+```
 
-- wallet network is set in `frontend/src/hooks/stellar-wallets-kit.ts`
-- Horizon endpoint is set in `frontend/src/lib/stellar.ts`
+Public configuration is documented in [ENVIRONMENT.md](ENVIRONMENT.md). Important rules:
 
-That means the old file below is **reference-only** and is not consumed by the current frontend:
+- **Never commit** `.env`, `.env.local`, or real private keys
+- **Never put secrets** in `NEXT_PUBLIC_*` variables (they ship to the browser)
+- Defaults: Horizon `https://horizon.stellar.org`, wallet network `PUBLIC`
+
+At the moment the frontend reads:
+
+| Variable | Used by |
+|----------|---------|
+| `NEXT_PUBLIC_STELLAR_NETWORK` | `frontend/src/hooks/stellar-wallets-kit.ts` |
+| `NEXT_PUBLIC_HORIZON_URL` | `frontend/src/lib/stellar.ts` |
+| `NEXT_PUBLIC_SOROBAN_RPC_URL` | reserved for future contract clients |
+| `NEXT_PUBLIC_CONTRACT_ID` | reserved for future contract clients |
+
+The legacy file below is **reference-only** and is **not** consumed by the current frontend:
 
 ```text
 Documents/Task Bounty/.env.example
@@ -162,7 +177,7 @@ Documents/Task Bounty/.env.example
 
 ### When you may still want local configuration
 
-You may choose to add a private `.env.local` later if you wire contract IDs, RPC URLs, or feature flags into the frontend. Until the code reads those variables, creating the file has no effect.
+Use `frontend/.env.local` to point at Testnet Horizon, a custom RPC URL, or a deployed contract ID without changing source. Keep deployer secrets in your shell or password manager — not in the frontend env file.
 
 ---
 

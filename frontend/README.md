@@ -72,6 +72,12 @@ Example response (`200 OK`, `Cache-Control: no-store`):
 
 The endpoint is always server-rendered (never cached), so it reflects the live process. It can be wired into load balancers, uptime monitors, or container orchestration probes.
 
+## Environment variables
+
+Copy [`.env.example`](./.env.example) to `.env.local` for optional public overrides (network, Horizon URL, contract ID).
+
+**Never commit secrets.** See [`../ENVIRONMENT.md`](../ENVIRONMENT.md) for the full policy. Only `NEXT_PUBLIC_*` values are available in the browser — do not put private keys or API tokens there.
+
 ## Running Tests
 
 Unit tests are written with [Vitest](https://vitest.dev):
