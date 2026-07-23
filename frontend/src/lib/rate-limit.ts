@@ -11,6 +11,17 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
+/**
+ * The result returned by checkRateLimit, allowing callers to both detect a
+ * blocked request and attach the informational headers to a successful response.
+ */
+export type RateLimitResult = {
+  /** null when the request is allowed; a 429 NextResponse when blocked. */
+  response: NextResponse | null;
+  /** Headers to merge onto a successful response. */
+  headers: Record<string, string>;
+};
+
 const store = new Map<string, RateLimitEntry>();
 
 function parsePositiveInt(value: string | undefined, fallback: number) {
@@ -37,14 +48,30 @@ function getClientKey(request: Request) {
 }
 
 function isEnabled() {
-  return process.env.API_RATE_LIMIT_ENABLED === "true";
+  return process.env[RATE_LIMIT_ENABLED_ENV] === "true";
 }
 
-export function enforceRateLimit(request: Request) {
-  if (!isEnabled()) {
-    return null;
-  }
-
+/**
+ * Check the rate limit for the incoming request.
+ *
+ * Returns a `RateLimitResult` with:
+ * - `response`: a 429 `NextResponse` if the limit is exceeded, otherwise `null`.
+ * - `headers`: informational rate-limit headers to attach to successful responses.
+ *
+ * Example usage in a route handler:
+ *
+ * ```ts
+ * const { response, headers } = checkRateLimit(request);
+ * if (response) return response;
+ * return NextResponse.json({ ok: true }, { headers });
+ * ```
+ *
+ * Limits (configurable via env vars):
+ * - `API_RATE_LIMIT_MAX_REQUESTS` — max requests per window (default 60)
+ * - `API_RATE_LIMIT_WINDOW_MS`   — window length in ms (default 60 000)
+ * - `API_RATE_LIMIT_ENABLED`     — must be `"true"` to activate enforcement
+ */
+export function checkRateLimit(request: Request): RateLimitResult {
   const windowMs = parsePositiveInt(
     process.env[RATE_LIMIT_WINDOW_MS_ENV],
     DEFAULT_WINDOW_MS,
@@ -54,6 +81,19 @@ export function enforceRateLimit(request: Request) {
     DEFAULT_LIMIT,
   );
 
+  // When rate limiting is disabled, still return the informational headers so
+  // clients can see the configured limits without enforcement.
+  if (!isEnabled()) {
+    return {
+      response: null,
+      headers: {
+        "X-RateLimit-Limit": String(maxRequests),
+        "X-RateLimit-Remaining": String(maxRequests),
+        "X-RateLimit-Reset": String(Math.ceil((Date.now() + windowMs) / 1000)),
+      },
+    };
+  }
+
   const now = Date.now();
   const key = getClientKey(request);
   const existing = store.get(key);
@@ -61,26 +101,38 @@ export function enforceRateLimit(request: Request) {
   if (!existing || existing.resetAt <= now) {
     const nextEntry = { count: 1, resetAt: now + windowMs };
     store.set(key, nextEntry);
-    return null;
+    const remaining = maxRequests - 1;
+    return {
+      response: null,
+      headers: {
+        "X-RateLimit-Limit": String(maxRequests),
+        "X-RateLimit-Remaining": String(remaining),
+        "X-RateLimit-Reset": String(Math.ceil(nextEntry.resetAt / 1000)),
+      },
+    };
   }
 
   if (existing.count >= maxRequests) {
     const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
-    return new NextResponse(
-      JSON.stringify({
-        ok: false,
-        error: "Too many requests. Please try again later.",
-      }),
-      {
-        status: 429,
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": String(retryAfterSeconds),
-          "X-Rate-Limit-Limit": String(maxRequests),
-          "X-Rate-Limit-Remaining": "0",
+    return {
+      response: new NextResponse(
+        JSON.stringify({
+          ok: false,
+          error: "Too many requests. Please try again later.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfterSeconds),
+            "X-RateLimit-Limit": String(maxRequests),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(Math.ceil(existing.resetAt / 1000)),
+          },
         },
-      },
-    );
+      ),
+      headers: {},
+    };
   }
 
   store.set(key, {
@@ -88,5 +140,24 @@ export function enforceRateLimit(request: Request) {
     resetAt: existing.resetAt,
   });
 
-  return null;
+  const remaining = maxRequests - (existing.count + 1);
+  return {
+    response: null,
+    headers: {
+      "X-RateLimit-Limit": String(maxRequests),
+      "X-RateLimit-Remaining": String(remaining),
+      "X-RateLimit-Reset": String(Math.ceil(existing.resetAt / 1000)),
+    },
+  };
+}
+
+/**
+ * Legacy helper retained for backward compatibility with existing route handlers
+ * that only check for a blocked response and do not need the informational headers.
+ *
+ * Prefer `checkRateLimit` for new routes so callers can forward the
+ * `X-RateLimit-Remaining` header to clients.
+ */
+export function enforceRateLimit(request: Request): NextResponse | null {
+  return checkRateLimit(request).response;
 }

@@ -7,20 +7,25 @@ import {
   MAX_TASK_SUBMISSION_TOTAL_SIZE_BYTES,
   validateTaskSubmissionFiles,
 } from "@/lib/task-submission-files";
-import { enforceRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function buildNoStoreJson(body: unknown, status: number) {
+function buildNoStoreJson(
+  body: unknown,
+  status: number,
+  extraHeaders: Record<string, string> = {},
+) {
   return NextResponse.json(body, {
     status,
-    headers: { "Cache-Control": "no-store" },
+    headers: { "Cache-Control": "no-store", ...extraHeaders },
   });
 }
 
 export async function POST(request: Request) {
-  const rateLimitResponse = enforceRateLimit(request);
+  const { response: rateLimitResponse, headers: rateLimitHeaders } =
+    checkRateLimit(request);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -36,6 +41,7 @@ export async function POST(request: Request) {
         error: "Please upload files using a valid form.",
       },
       400,
+      rateLimitHeaders,
     );
   }
 
@@ -55,6 +61,7 @@ export async function POST(request: Request) {
         },
       },
       validation.status,
+      rateLimitHeaders,
     );
   }
 
@@ -70,5 +77,6 @@ export async function POST(request: Request) {
       },
     },
     200,
+    rateLimitHeaders,
   );
 }
