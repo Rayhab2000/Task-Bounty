@@ -1,10 +1,17 @@
 import { createTask } from "@/lib/task-workflow";
 import { buildNoStoreJson } from "@/lib/api-response";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const { response: rateLimitResponse, headers: rateLimitHeaders } =
+    checkRateLimit(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   let body: unknown;
 
   try {
@@ -16,6 +23,7 @@ export async function POST(request: Request) {
         error: "Request body must be valid JSON.",
       },
       400,
+      rateLimitHeaders,
     );
   }
 
@@ -27,6 +35,7 @@ export async function POST(request: Request) {
         details: ["Request body must be a JSON object."],
       },
       400,
+      rateLimitHeaders,
     );
   }
 
@@ -48,6 +57,7 @@ export async function POST(request: Request) {
         details: result.details,
       },
       result.status,
+      rateLimitHeaders,
     );
   }
 
@@ -57,5 +67,6 @@ export async function POST(request: Request) {
       task: result.task,
     },
     201,
+    rateLimitHeaders,
   );
 }

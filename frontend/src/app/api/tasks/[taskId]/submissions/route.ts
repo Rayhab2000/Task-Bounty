@@ -7,6 +7,7 @@ import {
 } from "@/lib/task-submission-files";
 import { submitTaskWork } from "@/lib/task-workflow";
 import { buildNoStoreJson } from "@/lib/api-response";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,12 @@ type RouteContext = {
 };
 
 export async function POST(request: Request, context: RouteContext) {
+  const { response: rateLimitResponse, headers: rateLimitHeaders } =
+    checkRateLimit(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const { taskId } = await context.params;
 
   let formData: FormData;
@@ -29,6 +36,7 @@ export async function POST(request: Request, context: RouteContext) {
         error: "Please submit work using a valid multipart form.",
       },
       400,
+      rateLimitHeaders,
     );
   }
 
@@ -52,6 +60,7 @@ export async function POST(request: Request, context: RouteContext) {
         },
       },
       validation.status,
+      rateLimitHeaders,
     );
   }
 
@@ -73,6 +82,7 @@ export async function POST(request: Request, context: RouteContext) {
         details: result.details,
       },
       result.status,
+      rateLimitHeaders,
     );
   }
 
@@ -83,5 +93,6 @@ export async function POST(request: Request, context: RouteContext) {
       submission: result.submission,
     },
     201,
+    rateLimitHeaders,
   );
 }
